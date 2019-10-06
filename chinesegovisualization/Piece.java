@@ -32,6 +32,26 @@ public class Piece {
         b.pane.getChildren().add(circle);
     }
     
+    public Color getColor(){return color;}
+    
+    public void highlight(){
+        if(circle.getFill()!=Color.YELLOW){
+            circle.setStroke(Color.YELLOW);
+        }else{
+            circle.setStroke(Color.BLUE);
+        }
+    }
+    public void unhighlight(){
+        circle.setStroke(Color.BLACK);
+    }
+    
+    public void move(Space s, Space e){
+        moveFrom(s);
+        moveTo(e);
+        circle.setCenterX(e.cenx);
+        circle.setCenterY(e.ceny);
+    }
+    
     public void moveTo(Space s){
         s.occupied = true;
         s.piece = this;

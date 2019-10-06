@@ -7,6 +7,9 @@ package chinesegovisualization;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.ArcType;
@@ -23,11 +26,13 @@ public class Board {
     protected Space[][] board;
     
     protected final int PIECE_WIDTH = 5;
+    private int numPlayers;
     
     public Board(Canvas canvas, Pane pane, int numPlayers){
         this.pane = pane;
         this.canvas = canvas;
         ctx = canvas.getGraphicsContext2D();
+        this.numPlayers = numPlayers;
         board = createBoard(board);
         drawBoard(board);
         
@@ -37,7 +42,8 @@ public class Board {
                 createTeam1(board);
                 break;
             case 2:
-                createTeam2(board);
+                createTeam1(board);
+                createTeam4(board);
                 break;
             case 3:
                 createTeam2(board);
@@ -68,6 +74,18 @@ public class Board {
             default:
                 break;
         }
+    }
+    
+    public Pane getPane(){return pane;}
+    public Canvas getCanvas(){return canvas;}
+    public int getNumPlayers(){return numPlayers;}
+    public Space[][] getBoard(){return board;}
+    
+    public Image screenshot(){
+        WritableImage tempImage = new WritableImage((int) pane.getPrefWidth(), (int) pane.getPrefHeight());
+        pane.snapshot(null, tempImage);
+        ImageView imgView = new ImageView(tempImage);
+        return imgView.getImage();
     }
     
     private Space[][] createBoard(Space[][] b){
@@ -169,7 +187,6 @@ public class Board {
             }
         }
     }
-    
     private void createTeam2(Space[][] b){
         Color c = Color.PURPLE;
         for(int i = 18; i <= 24; i+=2){
@@ -186,7 +203,6 @@ public class Board {
         board[6][22].setPiece(new Piece(this, b[6][22], c));
         board[7][21].setPiece(new Piece(this, b[7][21], c));
     }
-    
     private void createTeam3(Space[][] b){
         Color c = Color.GREEN;
         board[9][21].setPiece(new Piece(this, b[9][21], c));
@@ -204,7 +220,6 @@ public class Board {
         }
         
     }
-    
     private void createTeam4(Space[][] b){
         Color c = Color.DARKORANGE;
         for(int i = b.length-4; i < b.length; i++){
@@ -215,7 +230,6 @@ public class Board {
             }
         }
     }
-    
     private void createTeam5(Space[][] b){
         Color c = Color.BLUE;
         board[9][3].setPiece(new Piece(this, b[9][3], c));
@@ -232,7 +246,6 @@ public class Board {
             }
         }
     }
-    
     private void createTeam6(Space[][] b){
         Color c = Color.YELLOW;
         for(int i = 0; i <= 6; i+=2){
