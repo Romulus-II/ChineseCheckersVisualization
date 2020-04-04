@@ -5,6 +5,13 @@
  */
 package chinesecheckersvisalization;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
@@ -30,6 +37,13 @@ import javafx.stage.Stage;
  */
 public class ChineseCheckersVisualization extends Application {
     
+//Predefined Variables    
+    private final int NUM_PLAYERS = 6;
+    private final boolean ANALYZING_MOVE_SHEET = true;
+    private final boolean CHECKING_DISTANCES = false;
+    
+    
+    
     ProgressBar bar;
     
     ProgressIndicator indicator;
@@ -38,7 +52,8 @@ public class ChineseCheckersVisualization extends Application {
     
     private final int WIN_WIDTH = 1000, WIN_HEIGHT = 750;
     private final int CAN_WIDTH = 750, CAN_HEIGHT = 750;
-    private final int TOOLS_WIDTH = WIN_WIDTH-CAN_WIDTH;
+    
+    private BufferedWriter logger;
     
     @Override
     public void start(Stage primaryStage) {
@@ -58,67 +73,98 @@ public class ChineseCheckersVisualization extends Application {
         pane.setPrefSize(CAN_WIDTH, CAN_HEIGHT);
         
         //Very Important!!
-        int numPlayers = 2;
+        //Later change to ask for user input 1st.
+        int numPlayers = NUM_PLAYERS;
         
+        // Can only use one board type
+        //Board board = new Board(canvas, pane, true, true);
         Board board = new Board(canvas, pane, numPlayers);
         Game game = new Game(board);
         
-        FileReader fr = new FileReader("2Player_Moves_Eric.txt", game);
-        //game.move("d12", "e13");
-        
-        
-        
-        VBox tools = new VBox();
-        tools.setPrefWidth(TOOLS_WIDTH);
-        
-        Label turnLabel = new Label("Turn 0");
-        turnLabel.setPrefSize(TOOLS_WIDTH, TOOLS_WIDTH/4);
-        turnLabel.setAlignment(Pos.CENTER);
-        
-        
-        Button undo = new Button();
-        undo.setPrefSize(TOOLS_WIDTH/2,TOOLS_WIDTH/2);
-        try{
-            Image img = new Image("/images/undo.png", (TOOLS_WIDTH/2)-15, (TOOLS_WIDTH/2)-15, false, false);
-            ImageView icon = new ImageView(img);
-            undo.setGraphic(icon);
-        }catch(NullPointerException e){
-            System.out.println(e + "happnened");
+        /**/
+        // Can only be used if using the 2nd board type. Make sure number of players in
+        // move list matches variable numPlayers.
+        if(ANALYZING_MOVE_SHEET){
+            try {
+                FileReader fr = new FileReader("move_lists/new_6_player_moves_Eric.txt", game);
+            } catch (IOException ex) {
+                Logger.getLogger(ChineseCheckersVisualization.class.getName()).log(Level.SEVERE, null, ex);
+                System.out.println("Couldn't find moves list");
+            }
         }
-        undo.setOnAction((ActionEvent event) -> {
-            game.showPastTurn();
-            turnLabel.setText("Turn " + game.getTurnNumber());
-        });
-        Button redo = new Button();
-        redo.setPrefSize(TOOLS_WIDTH/2,TOOLS_WIDTH/2);
-        try{
-            Image img = new Image("/images/redo.png", (TOOLS_WIDTH/2)-15, (TOOLS_WIDTH/2)-15, false, false);
-            ImageView icon = new ImageView(img);
-            redo.setGraphic(icon);
-        }catch(NullPointerException e){
-            System.out.println(e + "happnened");
+        /**/
+        
+        CreateToolBar toolbar = new CreateToolBar(game, WIN_WIDTH, CAN_WIDTH);
+       
+        
+        //----------------------------------------------------------------------      
+        if(CHECKING_DISTANCES){
+            System.out.println("We have collected the spaces");
+            System.out.print(game.getSpaces().length);
+            System.out.println(" : " + game.getSpaces()[0].length);
+            try {
+                File logFile = new File("Log.txt");
+                logger = new BufferedWriter(new FileWriter(logFile, true));
+
+                logger.write(new Date(System.currentTimeMillis()).toString());
+                logger.newLine();
+                logger.write("Distance from center");
+
+                System.out.println("Now calculating distances");
+
+                for(int i = 0; i < game.getSpaces().length; i++){
+                    for(int j = 0; j < game.getSpaces()[0].length; j++){
+                        //System.out.println(i + " : " + j);
+                        if(game.getSpaces()[i][j].onBoard){
+                            String dist = "(";
+                            if(game.getSpaces()[i][j].x > 0 && game.getSpaces()[i][j].x < 10){
+                                dist = dist + " " + game.getSpaces()[i][j].x;
+                            }else{
+                                dist = dist + game.getSpaces()[i][j].x;
+                            }
+                            if(game.getSpaces()[i][j].y < 10){
+                                dist = dist + " " + game.getSpaces()[i][j].y;
+                            }else{
+                                dist = dist + game.getSpaces()[i][j].y;
+                            }
+                            dist = dist + ") : ";
+                            dist += game.distance(game.getSpaces()[i][j], 0, 0);
+                            //System.out.println(dist);
+                            logger.newLine();
+                            logger.write(dist);
+                        }
+                    }
+                }
+
+                logger.flush();
+                logger.close();
+
+            } catch (Exception e) {
+                System.err.println("Error: " + e.getMessage());
+                Logger.getLogger(DistanceLogger.class.getName()).log(Level.SEVERE, null, e);
+            }
         }
-        redo.setOnAction((ActionEvent event) -> {
-            game.showNextTurn();
-            turnLabel.setText("Turn " + game.getTurnNumber());
-        });
+        //----------------------------------------------------------------------
         
-        HBox v1 = new HBox();
-        v1.getChildren().addAll(undo, redo);
-        
-        
-        tools.getChildren().addAll(turnLabel, v1);
-        
+        /**
+        try {
+            DistanceLogger logger = new DistanceLogger(game);
+            logger.markDistances(0, 0);
+            logger.publish();
+        } catch (IOException ex) {
+            Logger.getLogger(ChineseCheckersVisualization.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        **/
         
         
         HBox main = new HBox();
-        main.getChildren().addAll(pane, tools);
+        main.getChildren().addAll(pane, toolbar.getContent());
         
         root.getChildren().add(main);
         
         Scene scene = new Scene(root, WIN_WIDTH, WIN_HEIGHT);
         
-        primaryStage.setTitle("Hello World!");
+        primaryStage.setTitle("Chinese Checkers Visualization");
         primaryStage.setScene(scene);
         primaryStage.show();
     }

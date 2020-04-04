@@ -5,6 +5,10 @@
  */
 package chinesecheckersvisalization;
 
+import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
@@ -14,25 +18,57 @@ import javafx.scene.shape.Circle;
  */
 public class Piece {
     
+    private Space s;
+    
     private Circle circle;
     private Color color;
     private double x, y;
+    private final int player;
     
-    public Piece(Board b, Space s, Color c){
+    public Piece(int width, Pane pane, Space s, Color c){
+        player = 0;
+        this.s = s;
         this.x = s.cenx;
         this.y = s.ceny;
         color = c;
         s.occupied = true;
-        s.piece = this;
+        s.setPiece(this);
+        circle = new Circle(x, y, width);
+        circle.setStrokeWidth(2);
+        circle.setStroke(Color.BLACK);
+        circle.setFill(c);
+        circle.setRadius(width);
+        pane.getChildren().add(circle);
+    }
+    
+    public Piece(Board b, Space s, Color c){
+        this.s = s;
+        player = b.player_index;
+        this.x = s.cenx;
+        this.y = s.ceny;
+        color = c;
+        s.occupied = true;
+        s.setPiece(this);
         circle = new Circle(x, y, b.PIECE_WIDTH);
         circle.setStrokeWidth(2);
         circle.setStroke(Color.BLACK);
         circle.setFill(c);
-        circle.setRadius(12.5);
+        circle.setRadius(b.PIECE_WIDTH);
         b.pane.getChildren().add(circle);
     }
     
     public Color getColor(){return color;}
+    
+    public void configure(Game game, Board board){
+        circle.setOnMousePressed(new EventHandler() {
+            @Override
+            public void handle(Event event) {
+                if(board.player_turn == player){
+                    game.showMoves(s);
+                }
+            }
+        });
+    }
     
     public void highlight(){
         if(circle.getFill()!=Color.YELLOW){
@@ -45,6 +81,7 @@ public class Piece {
         circle.setStroke(Color.BLACK);
     }
     
+    //Find a way to change s.
     public void move(Space s, Space e){
         moveFrom(s);
         moveTo(e);
@@ -53,6 +90,8 @@ public class Piece {
     }
     
     public void moveTo(Space s){
+        x = s.x;
+        y = s.y;
         s.occupied = true;
         s.piece = this;
     }

@@ -44,4 +44,8 @@ public class Space {
         cenx = x+5;
         ceny = y+5;
     }
+    
+    public String toString(){
+        return ("(" + x + "," + y + ")");
+    }
 }
